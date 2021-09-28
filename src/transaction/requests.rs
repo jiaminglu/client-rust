@@ -781,6 +781,23 @@ impl HasLocks for kvrpcpb::PrewriteResponse {
             .collect()
     }
 }
+pub fn new_delete_range_request(
+    start_key: Vec<u8>,
+    end_key: Vec<u8>,
+) -> kvrpcpb::DeleteRangeRequest {
+    let mut req = kvrpcpb::DeleteRangeRequest::default();
+    req.set_start_key(start_key);
+    req.set_end_key(end_key);
+
+    req
+}
+
+impl KvRequest for kvrpcpb::DeleteRangeRequest  {
+    type Response = kvrpcpb::DeleteRangeResponse;
+}
+impl HasLocks for kvrpcpb::DeleteRangeResponse {}
+
+shardable_range!(kvrpcpb::DeleteRangeRequest);
 
 #[cfg(test)]
 #[cfg_attr(feature = "protobuf-codec", allow(clippy::useless_conversion))]

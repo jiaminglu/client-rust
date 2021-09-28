@@ -415,6 +415,7 @@ impl<PdC: PdClient> Transaction<PdC> {
             .map(KvPair::into_key))
     }
 
+
     /// Sets the value associated with the given key.
     ///
     /// # Examples
@@ -506,6 +507,15 @@ impl<PdC: PdClient> Transaction<PdC> {
                 .await?;
         }
         self.buffer.delete(key);
+        Ok(())
+    }
+
+    pub async fn delete_range(&mut self, range: impl Into<BoundRange>) -> Result<()> {
+        let request = new_delete_range_request(range.into());
+        let plan = crate::request::PlanBuilder::new(self.rpc.clone(), request)
+            .retry_multi_region(DEFAULT_REGION_BACKOFF)
+            .plan();
+        plan.execute().await;
         Ok(())
     }
 
