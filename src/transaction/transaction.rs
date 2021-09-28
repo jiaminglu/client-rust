@@ -344,7 +344,7 @@ impl<PdC: PdClient> Transaction<PdC> {
         limit: u32,
     ) -> Result<impl Iterator<Item = KvPair>> {
         debug!(self.logger, "invoking transactional scan request");
-        self.scan_inner(range, limit, false).await
+        self.scan_inner(range, limit, false, false).await
     }
 
     /// Create a new 'scan' request that only returns the keys.
@@ -381,7 +381,22 @@ impl<PdC: PdClient> Transaction<PdC> {
     ) -> Result<impl Iterator<Item = Key>> {
         debug!(self.logger, "invoking transactional scan_keys request");
         Ok(self
-            .scan_inner(range, limit, true)
+            .scan_inner(range, limit, false, true)
+            .await?
+            .map(KvPair::into_key))
+    }
+
+    /// Create a 'scan_keys_reverse' request.
+    ///
+    /// Similar to [`scan_keys`](Transaction::scan_keys), but scans in the reverse direction.
+    pub async fn scan_keys_reverse(
+        &mut self,
+        range: impl Into<BoundRange>,
+        limit: u32,
+    ) -> Result<impl Iterator<Item = Key>> {
+        debug!(self.logger, "invoking transactional scan_keys request");
+        Ok(self
+            .scan_inner(range, limit, false, true)
             .await?
             .map(KvPair::into_key))
     }
@@ -389,10 +404,15 @@ impl<PdC: PdClient> Transaction<PdC> {
     /// Create a 'scan_reverse' request.
     ///
     /// Similar to [`scan`](Transaction::scan), but scans in the reverse direction.
-    pub(crate) fn scan_reverse(&self, _range: impl RangeBounds<Key>) -> BoxStream<Result<KvPair>> {
-        debug!(self.logger, "invoking transactional scan_reverse request");
-        unimplemented!()
+    pub async fn scan_reverse(
+        &mut self,
+        range: impl Into<BoundRange>,
+        limit: u32,
+    ) -> Result<impl Iterator<Item = KvPair>> {
+        debug!(self.logger, "invoking transactional scan request");
+        self.scan_inner(range, limit, true, false).await
     }
+
 
     /// Sets the value associated with the given key.
     ///
@@ -485,6 +505,15 @@ impl<PdC: PdClient> Transaction<PdC> {
                 .await?;
         }
         self.buffer.delete(key);
+        Ok(())
+    }
+
+    pub async fn delete_range(&mut self, range: impl Into<BoundRange>) -> Result<()> {
+        let request = new_delete_range_request(range.into());
+        let plan = crate::request::PlanBuilder::new(self.rpc.clone(), request)
+            .retry_multi_region(DEFAULT_REGION_BACKOFF)
+            .plan();
+        plan.execute().await;
         Ok(())
     }
 
@@ -679,6 +708,7 @@ impl<PdC: PdClient> Transaction<PdC> {
         &mut self,
         range: impl Into<BoundRange>,
         limit: u32,
+        reverse: bool,
         key_only: bool,
     ) -> Result<impl Iterator<Item = KvPair>> {
         self.check_allow_operation().await?;
@@ -691,7 +721,7 @@ impl<PdC: PdClient> Transaction<PdC> {
                 range.into(),
                 limit,
                 move |new_range, new_limit| async move {
-                    let request = new_scan_request(new_range, timestamp, new_limit, key_only);
+                    let request = new_scan_request(new_range, timestamp, new_limit, reverse, key_only);
                     let plan = PlanBuilder::new(rpc, request)
                         .resolve_lock(retry_options.lock_backoff)
                         .retry_multi_region(retry_options.region_backoff)

@@ -123,6 +123,7 @@ pub fn new_scan_request(
     end_key: Vec<u8>,
     timestamp: u64,
     limit: u32,
+    reverse: bool,
     key_only: bool,
 ) -> kvrpcpb::ScanRequest {
     let mut req = kvrpcpb::ScanRequest::default();
@@ -131,6 +132,7 @@ pub fn new_scan_request(
     req.set_limit(limit);
     req.set_key_only(key_only);
     req.set_version(timestamp);
+    req.set_reverse(reverse);
     req
 }
 
@@ -653,3 +655,20 @@ impl HasLocks for kvrpcpb::PrewriteResponse {
             .collect()
     }
 }
+pub fn new_delete_range_request(
+    start_key: Vec<u8>,
+    end_key: Vec<u8>,
+) -> kvrpcpb::DeleteRangeRequest {
+    let mut req = kvrpcpb::DeleteRangeRequest::default();
+    req.set_start_key(start_key);
+    req.set_end_key(end_key);
+
+    req
+}
+
+impl KvRequest for kvrpcpb::DeleteRangeRequest  {
+    type Response = kvrpcpb::DeleteRangeResponse;
+}
+impl HasLocks for kvrpcpb::DeleteRangeResponse {}
+
+shardable_range!(kvrpcpb::DeleteRangeRequest);

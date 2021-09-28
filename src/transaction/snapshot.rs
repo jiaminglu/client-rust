@@ -51,6 +51,15 @@ impl Snapshot {
         self.transaction.scan(range, limit).await
     }
 
+    pub async fn scan_reverse(
+        &mut self,
+        range: impl Into<BoundRange>,
+        limit: u32,
+    ) -> Result<impl Iterator<Item = KvPair>> {
+        debug!(self.logger, "invoking scan request on snapshot");
+        self.transaction.scan_reverse(range, limit).await
+    }
+
     /// Scan a range, return at most `limit` keys that lying in the range.
     pub async fn scan_keys(
         &mut self,
@@ -61,10 +70,13 @@ impl Snapshot {
         self.transaction.scan_keys(range, limit).await
     }
 
-    /// Unimplemented. Similar to scan, but in the reverse direction.
     #[allow(dead_code)]
-    fn scan_reverse(&mut self, range: impl RangeBounds<Key>) -> BoxStream<Result<KvPair>> {
-        debug!(self.logger, "invoking scan_reverse request on snapshot");
-        self.transaction.scan_reverse(range)
+    pub async fn scan_keys_reverse(
+        &mut self,
+        range: impl Into<BoundRange>,
+        limit: u32,
+    ) -> Result<impl Iterator<Item = Key>> {
+        debug!(self.logger, "invoking scan_keys request on snapshot");
+        self.transaction.scan_keys_reverse(range, limit).await
     }
 }
