@@ -13,6 +13,7 @@ default = []
 # Enable integration tests with a running TiKV and PD instance.
 # Use $PD_ADDRS, comma separated, to set the addresses the tests use.
 integration-tests = []
+openssl-vendered = ["grpcio/openssl-vendored"]
 
 [lib]
 name = "tikv_client"
@@ -24,7 +25,7 @@ either = "1.6"
 fail = "0.4"
 futures = { version = "0.3", features = ["async-await", "thread-pool"] }
 futures-timer = "3.0"
-grpcio = { version = "0.9", features = [ "secure", "prost-codec", "use-bindgen", "openssl-vendored" ], default-features = false }
+grpcio = { version = "0.9", features = [ "secure", "prost-codec", "use-bindgen", "openssl" ], default-features = false }
 lazy_static = "1"
 log = "0.4"
 prometheus = { version = "0.12", features = [ "push", "process" ], default-features = false } 
