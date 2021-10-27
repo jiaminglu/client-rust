@@ -135,6 +135,27 @@ impl Client {
         Ok(self.new_transaction(timestamp, TransactionOptions::new_optimistic()))
     }
 
+    /// Creates a new optimistic [`Transaction`] with snapshot timestamp.
+    ///
+    /// Use the transaction to issue requests like [`get`](Transaction::get) or
+    /// [`put`](Transaction::put).
+    ///
+    /// Write operations do not lock data in TiKV, thus the commit request may fail due to a write
+    /// conflict.
+    pub fn begin_optimistic_snapshot(&self, timestamp: Timestamp) -> Result<Transaction> {
+        debug!(self.logger, "creating new optimistic transaction with timestamp");
+        Ok(self.new_transaction(timestamp, TransactionOptions::new_optimistic()))
+    }
+
+    /// Creates a new pessimistic [`Transaction`] with snapshot timestamp.
+    ///
+    /// Write operations will lock the data until committed, thus commit requests should not suffer
+    /// from write conflicts.
+    pub fn begin_pessimistic_snapshot(&self, timestamp: Timestamp) -> Result<Transaction> {
+        debug!(self.logger, "creating new pessimistic transaction with timestamp");
+        Ok(self.new_transaction(timestamp, TransactionOptions::new_pessimistic()))
+    }
+
     /// Creates a new pessimistic [`Transaction`].
     ///
     /// Write operations will lock the data until committed, thus commit requests should not suffer
