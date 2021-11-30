@@ -13,7 +13,7 @@ default = []
 # Enable integration tests with a running TiKV and PD instance.
 # Use $PD_ADDRS, comma separated, to set the addresses the tests use.
 integration-tests = []
-openssl-vendered = ["grpcio/openssl-vendored"]
+openssl-vendored = ["grpcio/openssl-vendored"]
 
 [lib]
 name = "tikv_client"
